@@ -1,0 +1,10 @@
+// app global css in SCSS form
+@font-face {
+  font-family: JosefinSans;
+  src: url(./fonts/josefinSans.woff);
+}
+
+// declare a class which applies it
+.my-font {
+  font-family: "JosefinSans";
+}

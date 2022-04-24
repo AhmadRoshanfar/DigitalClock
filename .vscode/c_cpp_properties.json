@@ -11,7 +11,8 @@
                 "${config:idf.espAdfPath}/components/**",
                 "${config:idf.espAdfPathWin}/components/**",
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/components/connect_wifi/include"
+                "${workspaceFolder}/components/connect_wifi/include",
+                "/home/ahmad/Development/ESP32/esp-idf/components/freertos/port/xtensa/include/freertos/"
             ],
             "browse": {
                 "path": [
@@ -22,7 +23,8 @@
                     "${workspaceFolder}"
                 ],
                 "limitSymbolsToIncludedHeaders": false
-            }
+            },
+            "configurationProvider": "nrf-connect"
         }
     ],
     "version": 4

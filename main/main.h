@@ -8,6 +8,11 @@
 #include <sys/time.h>
 #include "esp_sntp.h"
 #include "esp_sleep.h"
+#include "esp_err.h"
+#include <driver/uart.h>
+#include "esp_spiffs.h"
+#include "sdkconfig.h"
+#include "esp_vfs_fat.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>

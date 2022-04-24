@@ -39,7 +39,22 @@ void oled_init()
     ssd1306_refresh_gram(ssd1306_dev);
     ssd1306_clear_screen(ssd1306_dev, 0x00);
 }
+void uart_init()
+{
+    // const uart_port_t uart_num = UART_NUM_0;
+    // uart_config_t uart_config = {
+    //     .baud_rate = 115200,
+    //     .data_bits = UART_DATA_8_BITS,
+    //     .parity = UART_PARITY_DISABLE,
+    //     .stop_bits = UART_STOP_BITS_1,
+    //     .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+    // };
+    /* 1 TX 3 RX */
 
+    // ESP_ERROR_CHECK(uart_driver_install(ECHO_UART_PORT_NUM, BUF_SIZE * 2, 0, 0, NULL, intr_alloc_flags));
+    // ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
+    // ESP_ERROR_CHECK(uart_set_pin(ECHO_UART_PORT_NUM, 1, 3, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+}
 void hw_init()
 {
     nvs_init();
@@ -82,12 +97,17 @@ static void show_time(void *arg)
         time(&now);
         localtime_r(&now, &timeinfo);
         // ssd1306_refresh_gram(ssd1306_dev);
+
+        /* Full weekday name */
+        strftime(buf, sizeof(buf), "%A", &timeinfo);
+        ssd1306_draw_string(ssd1306_dev, 40, 0, (const uint8_t *)buf, 16, 1);
+        /* Hour */
         strftime(buf, sizeof(buf), "%H:%M:%S", &timeinfo);
         ssd1306_draw_string(ssd1306_dev, 32, 16, (const uint8_t *)buf, 16, 1);
-        strftime(buf, sizeof(buf), "%A", &timeinfo);
-        ssd1306_draw_string(ssd1306_dev, 32, 0, (const uint8_t *)buf, 16, 1);
-        strftime(buf, sizeof(buf), "%x", &timeinfo);
-        ssd1306_draw_string(ssd1306_dev, 32, 32, (const uint8_t *)buf, 16, 1);
+        /* Date */
+        strftime(buf, sizeof(buf), "%d %b %Y", &timeinfo);
+        ssd1306_draw_string(ssd1306_dev, 25, 32, (const uint8_t *)buf, 16, 1);
+
         ssd1306_refresh_gram(ssd1306_dev);
 
         /* Deep Sleep for 10 Second */
@@ -125,7 +145,7 @@ void wifi_conn_cb(void)
 {
     char data_str[20] = {0};
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-    sprintf(data_str, "Wifi connected");
+    sprintf(data_str, "Wifi Connected");
     ssd1306_draw_string(ssd1306_dev, 2, 32, (const uint8_t *)data_str, 16, 1);
     ssd1306_refresh_gram(ssd1306_dev);
     init_sntp();
@@ -146,6 +166,47 @@ void wifi_init()
     connect_wifi(p);
 }
 
+esp_err_t start_rest_server(const char *base_path);
+
+esp_err_t init_fs(void)
+{
+    esp_vfs_spiffs_conf_t conf = {
+        .base_path = "/www",
+        .partition_label = NULL,
+        .max_files = 5,
+        .format_if_mount_failed = false};
+    esp_err_t ret = esp_vfs_spiffs_register(&conf);
+
+    if (ret != ESP_OK)
+    {
+        if (ret == ESP_FAIL)
+        {
+            ESP_LOGE(TAG, "Failed to mount or format filesystem");
+        }
+        else if (ret == ESP_ERR_NOT_FOUND)
+        {
+            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+        }
+        else
+        {
+            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+        }
+        return ESP_FAIL;
+    }
+
+    size_t total = 0, used = 0;
+    ret = esp_spiffs_info(NULL, &total, &used);
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
+    }
+    return ESP_OK;
+}
+
 void app_main(void)
 {
     ++boot_count;
@@ -153,6 +214,10 @@ void app_main(void)
 
     hw_init();
     wifi_init();
+
+    ESP_ERROR_CHECK(init_fs());
+    start_rest_server("/www");
+
     char data_str[20] = {0};
     sprintf(data_str, "Hello Bright");
     ssd1306_draw_string(ssd1306_dev, 10, 0, (const uint8_t *)data_str, 16, 1);
