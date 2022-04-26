@@ -4,6 +4,8 @@
         "*.ejs": "html",
         "*.md": "markdown",
         "main.h": "c",
-        "ssd1306.h": "c"
+        "ssd1306.h": "c",
+        "esp_console.h": "c",
+        "argtable3.h": "c"
     }
 }
